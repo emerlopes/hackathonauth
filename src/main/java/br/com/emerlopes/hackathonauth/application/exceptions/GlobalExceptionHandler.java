@@ -1,10 +1,12 @@
 package br.com.emerlopes.hackathonauth.application.exceptions;
 
+import br.com.emerlopes.hackathonauth.application.shared.CustomResponseDTO;
 import br.com.emerlopes.hackathonauth.application.shared.ErrorCode;
 import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -29,5 +31,13 @@ public class GlobalExceptionHandler {
 
     public record ErrorResponse(String errorCode, String message) {
 
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<CustomResponseDTO<String>> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
+        String parameterName = ex.getParameterName();
+        CustomMissingServletRequestParameterException customException = new CustomMissingServletRequestParameterException(parameterName);
+        CustomResponseDTO<String> response = new CustomResponseDTO<String>().setData(customException.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }
