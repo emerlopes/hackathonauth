@@ -31,9 +31,9 @@ public class AutenticacaoController {
 
     @PostMapping("/token")
     public ResponseEntity<CustomResponseDTO<AutenticacaoResponseDTO>> getToken(
-            @RequestParam String username,
-            @RequestParam String password,
-            @RequestParam("client_secret") String clientSecret
+            final @RequestParam String username,
+            final @RequestParam String password,
+            final @RequestParam("client_secret") String clientSecret
     ) throws InvalidLoginException {
         try {
             logger.info("Gerando token para usuario: {}", username);
