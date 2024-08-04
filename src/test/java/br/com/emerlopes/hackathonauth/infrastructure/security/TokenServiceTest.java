@@ -4,12 +4,15 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.Verification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +42,9 @@ class TokenServiceTest {
     @Mock
     private DecodedJWT decodedJWT;
 
+    @Mock
+    private JWT jwt;
+
     @Value("${spring.security.secret}")
     private String secret = "mysecretkey";
 
@@ -54,15 +60,6 @@ class TokenServiceTest {
         List<GrantedAuthority> authorities = List.of(() -> "ROLE_USER");
         UserDetails userDetails = new User("testUser", "testPassword", authorities);
         String clientSecret = "clientSecret";
-        String expectedToken = "generatedToken";
-
-        Algorithm algorithm = Algorithm.HMAC256(clientSecret.trim());
-        String token = JWT.create()
-                .withIssuer("API")
-                .withSubject(userDetails.getUsername())
-                .withClaim("roles", List.of("ROLE_USER"))
-                .withExpiresAt(Instant.now().plusSeconds(120))
-                .sign(algorithm);
 
         // Act
         String resultToken = tokenService.gerarToken(userDetails, clientSecret);
@@ -95,14 +92,6 @@ class TokenServiceTest {
     void testValidarToken() {
         // Arrange
         String token = "valid.token.structure";
-        String expectedSubject = "testUser";
-
-//        when(jwtVerifier.verify(token)).thenReturn(decodedJWT);
-//        when(decodedJWT.getSubject()).thenReturn(expectedSubject);
-
-        JWTVerifier verifier = mock(JWTVerifier.class);
-//        when(verifier.verify(token)).thenReturn(decodedJWT);
-//        ReflectionTestUtils.setField(tokenService, "jwtVerifier", verifier);
 
         // Act
         String resultSubject = tokenService.validarToken(token);
@@ -121,5 +110,71 @@ class TokenServiceTest {
 
         // Assert
         assertNull(resultSubject);
+    }
+
+    @Test
+    public void testValidateToken_ValidToken() {
+        String token = "validToken";
+        String expectedSubject = "user123";
+
+        try (MockedStatic<JWT> mockedJWT = mockStatic(JWT.class)) {
+            JWTVerifier verifier = mock(JWTVerifier.class);
+            DecodedJWT decodedJWT = mock(DecodedJWT.class);
+            Verification verification = mock(Verification.class);
+
+            mockedJWT.when(() -> JWT.require(any(Algorithm.class))).thenReturn(verification);
+            when(verification.withIssuer(anyString())).thenReturn(verification);
+            when(verification.build()).thenReturn(verifier);
+            when(verifier.verify(token)).thenReturn(decodedJWT);
+            when(decodedJWT.getSubject()).thenReturn(expectedSubject);
+
+            String subject = tokenService.validateToken(token);
+
+            assertEquals(expectedSubject, subject);
+        }
+    }
+
+    @Test
+    public void testValidateToken_InvalidToken() {
+        String token = "invalidToken";
+
+        try (MockedStatic<JWT> mockedJWT = mockStatic(JWT.class)) {
+            JWTVerifier verifier = mock(JWTVerifier.class);
+            Verification verification = mock(Verification.class);
+
+            mockedJWT.when(() -> JWT.require(any(Algorithm.class))).thenReturn(verification);
+            when(verification.withIssuer(anyString())).thenReturn(verification);
+            when(verification.build()).thenReturn(verifier);
+            when(verifier.verify(token)).thenThrow(JWTVerificationException.class);
+
+            DecodedJWT decodedJWT = mock(DecodedJWT.class);
+            when(JWT.decode(token)).thenReturn(decodedJWT);
+            when(decodedJWT.getSubject()).thenReturn(null);
+
+            String subject = tokenService.validateToken(token);
+
+            assertNull(subject);
+        }
+    }
+
+    @Test
+    public void testValidateToken_MalformedToken() {
+        String token = "malformedToken";
+
+        try (MockedStatic<JWT> mockedJWT = mockStatic(JWT.class)) {
+            JWTVerifier verifier = mock(JWTVerifier.class);
+            Verification verification = mock(Verification.class);
+
+            mockedJWT.when(() -> JWT.require(any(Algorithm.class))).thenReturn(verification);
+            when(verification.withIssuer(anyString())).thenReturn(verification);
+            when(verification.build()).thenReturn(verifier);
+            when(verifier.verify(token)).thenThrow(JWTVerificationException.class);
+
+            when(JWT.decode(token)).thenThrow(RuntimeException.class);
+
+            String subject = tokenService.validateToken(token);
+
+            assertNull(subject);
+        }
     }
 }

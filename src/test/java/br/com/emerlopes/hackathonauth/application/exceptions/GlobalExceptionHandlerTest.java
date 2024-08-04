@@ -4,19 +4,19 @@ import br.com.emerlopes.hackathonauth.application.shared.CustomResponseDTO;
 import br.com.emerlopes.hackathonauth.application.shared.ErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
@@ -25,6 +25,35 @@ class GlobalExceptionHandlerTest {
 
     @Mock
     private Logger logger;
+
+    @Test
+    public void testHandleFieldValidationException() throws NoSuchMethodException {
+        BindingResult bindingResult = mock(BindingResult.class);
+
+        MethodParameter methodParameter = new MethodParameter(
+                GlobalExceptionHandlerTest.class.getDeclaredMethod("testHandleFieldValidationException"), -1);
+
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(methodParameter, bindingResult);
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> responseEntity = globalExceptionHandler.handleFieldValidationException(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals(ErrorCode.VALIDATION_ERROR.getCode(), responseEntity.getBody().errorCode());
+        assertEquals(ErrorCode.VALIDATION_ERROR.getMessage(), responseEntity.getBody().message());
+    }
+
+    @Test
+    public void testHandleInvalidLoginException() {
+
+        InvalidLoginException ex = mock(InvalidLoginException.class);
+        when(ex.getMessage()).thenReturn("Invalid login attempt");
+
+        ResponseEntity<GlobalExceptionHandler.ErrorResponse> responseEntity = globalExceptionHandler.handleInvalidLoginException(ex);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
+        assertEquals(ErrorCode.AUTHENTICATION_ERROR.getCode(), responseEntity.getBody().errorCode());
+        assertEquals(ErrorCode.AUTHENTICATION_ERROR.getMessage(), responseEntity.getBody().message());
+    }
 
     @Test
     void testHandleMissingServletRequestParameterException() {
