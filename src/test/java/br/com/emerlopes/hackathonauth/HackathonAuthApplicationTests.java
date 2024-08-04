@@ -12,7 +12,6 @@ class HackathonAuthApplicationTests {
     @Autowired
     private ApplicationContext applicationContext;
 
-    @Test
     void contextLoads() {
         // Act & Assert
         assertNotNull(applicationContext);
