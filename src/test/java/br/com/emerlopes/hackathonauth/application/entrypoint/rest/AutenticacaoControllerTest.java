@@ -54,11 +54,11 @@ class AutenticacaoControllerTest {
         Mockito.when(autenticacaoUseCase.execute(Mockito.any(AutenticacaoDomainEntity.class))).thenReturn(resultadoExecucaoUseCase);
 
         // Act
-        ResponseEntity<CustomResponseDTO<AutenticacaoResponseDTO>> responseEntity = autenticacaoController.getToken(username, password, clientSecret);
+        ResponseEntity<AutenticacaoResponseDTO> responseEntity = autenticacaoController.getToken(username, password);
 
         // Assert
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        assertEquals(generatedToken, responseEntity.getBody().getData().getTokenAcesso());
+        assertEquals(generatedToken, responseEntity.getBody().getTokenAcesso());
     }
 
     @Test
@@ -73,7 +73,7 @@ class AutenticacaoControllerTest {
 
         // Act and Assert
         try {
-            autenticacaoController.getToken(username, password, clientSecret);
+            autenticacaoController.getToken(username, password);
         } catch (InvalidLoginException e) {
             assertEquals("Erro ao gerar token", e.getMessage());
         }
@@ -91,11 +91,11 @@ class AutenticacaoControllerTest {
         Mockito.when(validarTokenUseCase.execute(Mockito.any(AutenticacaoDomainEntity.class))).thenReturn(tokenValidationResult);
 
         // Act
-        ResponseEntity<CustomResponseDTO<TokenResponseDTO>> responseEntity = autenticacaoController.validateToken(accessToken);
+        ResponseEntity<TokenResponseDTO> responseEntity = autenticacaoController.validateToken(accessToken);
 
         // Assert
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertTrue(Objects.requireNonNull(responseEntity.getBody()).getData().isTokenValido());
+        assertTrue(Objects.requireNonNull(responseEntity.getBody()).isTokenValido());
     }
 
     @Test
@@ -110,11 +110,11 @@ class AutenticacaoControllerTest {
         Mockito.when(validarTokenUseCase.execute(Mockito.any(AutenticacaoDomainEntity.class))).thenReturn(tokenValidationResult);
 
         // Act
-        ResponseEntity<CustomResponseDTO<TokenResponseDTO>> responseEntity = autenticacaoController.validateToken(accessToken);
+        ResponseEntity<TokenResponseDTO> responseEntity = autenticacaoController.validateToken(accessToken);
 
         // Assert
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertFalse(Objects.requireNonNull(responseEntity.getBody()).getData().isTokenValido());
+        assertFalse(Objects.requireNonNull(responseEntity.getBody()).isTokenValido());
     }
 
 }
