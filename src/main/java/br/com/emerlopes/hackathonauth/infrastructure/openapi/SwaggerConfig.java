@@ -9,8 +9,9 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(title = "hackathonauth", version = "v1"),
         servers = {
-                @Server(url = "http://localhost:8080", description = "Servidor Local"),
-                @Server(url = "http://hackathonauth.com", description = "Servidor Docker")
+                @Server(url = "http://localhost:8081", description = "Servidor Local"),
+                @Server(url = "http://hackathonauth:8081", description = "Servidor Docker"),
+                @Server(url = "http://hackathonauth:8080", description = "Servidor Docker")
         }
 )
 public class SwaggerConfig {
