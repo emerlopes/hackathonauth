@@ -7,6 +7,6 @@ import lombok.Data;
 @Data
 @Builder
 public class AutenticacaoResponseDTO {
-    @JsonProperty("token_acesso")
+    @JsonProperty("token")
     private String tokenAcesso;
 }
