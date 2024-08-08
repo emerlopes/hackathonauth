@@ -2,8 +2,9 @@ package br.com.emerlopes.hackathonauth.application.entrypoint.rest;
 
 import br.com.emerlopes.hackathonauth.application.entrypoint.rest.dto.AutenticacaoResponseDTO;
 import br.com.emerlopes.hackathonauth.application.entrypoint.rest.dto.TokenResponseDTO;
+import br.com.emerlopes.hackathonauth.application.entrypoint.rest.examples.GerarTokenExample;
+import br.com.emerlopes.hackathonauth.application.entrypoint.rest.examples.ValidarTokenExample;
 import br.com.emerlopes.hackathonauth.application.exceptions.InvalidLoginException;
-import br.com.emerlopes.hackathonauth.application.shared.CustomResponseDTO;
 import br.com.emerlopes.hackathonauth.domain.entity.AutenticacaoDomainEntity;
 import br.com.emerlopes.hackathonauth.domain.usecase.AutenticacaoUseCase;
 import br.com.emerlopes.hackathonauth.domain.usecase.ValidarTokenUseCase;
@@ -29,11 +30,12 @@ public class AutenticacaoController {
         this.validarTokenUseCase = validarTokenUseCase;
     }
 
+    @GerarTokenExample
     @PostMapping("/token")
-    public ResponseEntity<CustomResponseDTO<AutenticacaoResponseDTO>> getToken(
+    public ResponseEntity<AutenticacaoResponseDTO> getToken(
             final @RequestParam String username,
-            final @RequestParam String password,
-            final @RequestParam("client_secret") String clientSecret
+            final @RequestParam String password
+//            final @RequestParam("client_secret") String clientSecret
     ) throws InvalidLoginException {
         try {
             logger.info("Gerando token para usuario: {}", username);
@@ -41,7 +43,7 @@ public class AutenticacaoController {
             AutenticacaoDomainEntity autenticacaoDomainEntity = AutenticacaoDomainEntity.builder()
                     .username(username)
                     .password(password)
-                    .secret(clientSecret)
+                    .secret("d6b93fc8-0ada-458e-b264-bcd152d07511")
                     .build();
 
             AutenticacaoDomainEntity resultadoExecucaoUseCase = autenticacaoUseCase.execute(autenticacaoDomainEntity);
@@ -52,10 +54,7 @@ public class AutenticacaoController {
                     .tokenAcesso(resultadoExecucaoUseCase.getToken())
                     .build();
 
-            CustomResponseDTO<AutenticacaoResponseDTO> response = new CustomResponseDTO<AutenticacaoResponseDTO>()
-                    .setData(autenticacaoResponseDTO);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(autenticacaoResponseDTO);
 
         } catch (final Exception exception) {
             logger.error("Erro ao gerar token para usuario: {}", username, exception);
@@ -64,8 +63,9 @@ public class AutenticacaoController {
     }
 
 
+    @ValidarTokenExample
     @PostMapping("/validate")
-    public ResponseEntity<CustomResponseDTO<TokenResponseDTO>> validateToken(
+    public ResponseEntity<TokenResponseDTO> validateToken(
             @RequestHeader("Authorization") String accessToken
     ) {
 
@@ -83,9 +83,7 @@ public class AutenticacaoController {
                 .tokenValido(tokenValidationResult.isValid())
                 .build();
 
-        CustomResponseDTO<TokenResponseDTO> response = new CustomResponseDTO<TokenResponseDTO>().setData(tokenResponse);
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(tokenResponse);
     }
 
 }
